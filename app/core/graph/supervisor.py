@@ -45,8 +45,9 @@ async def supervisor_node(state: AgentState, config: RunnableConfig) -> dict:
             last_user_msg = m.content
             break
 
+    model_override = config.get("configurable", {}).get("model")
     model = ChatOpenAI(
-        model=settings.supervisor_model,
+        model=model_override or settings.supervisor_model,
         api_key=settings.openai_api_key,
         base_url=settings.openai_base_url,
         temperature=0.1,
@@ -67,7 +68,16 @@ async def supervisor_node(state: AgentState, config: RunnableConfig) -> dict:
     if target not in VALID_TARGETS:
         target = "explainer"
 
+    # Guard: prevent infinite loop — don't call the same node consecutively without user input.
+    # But if the user just sent a new message (last message is human), allow the same target.
+    last_is_human = any(
+        hasattr(m, "type") and m.type == "human"
+        for m in messages[-1:]
+    )
+    if target == current_phase and target != "check_answer" and not last_is_human:
+        target = "FINISH"
+
     if target == "FINISH":
         target = "__end__"
 
-    return {"current_phase": target if target != "__end__" else "explaining", "next": target}
+    return {"current_phase": target if target != "__end__" else current_phase, "next": target}

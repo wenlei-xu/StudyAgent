@@ -9,7 +9,8 @@ from app.core.agents.recommender import recommender_agent
 
 async def recommender_node(state: AgentState, config: RunnableConfig) -> dict:
     """Generate learning resource recommendations."""
-    cards = await recommender_agent.run(dict(state))
+    model_override = config.get("configurable", {}).get("model")
+    cards = await recommender_agent.run(dict(state), model_override)
 
     if not cards or cards[0].get("title") == "推荐系统暂不可用":
         return {

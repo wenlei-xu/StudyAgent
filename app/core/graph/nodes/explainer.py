@@ -9,7 +9,8 @@ from app.core.agents.explainer import explainer_agent
 
 async def explainer_node(state: AgentState, config: RunnableConfig) -> dict:
     """Generate explanation using LLM."""
-    response_text = await explainer_agent.run(dict(state))
+    model_override = config.get("configurable", {}).get("model")
+    response_text = await explainer_agent.run(dict(state), model_override)
 
     return {
         "messages": [AIMessage(content=response_text)],

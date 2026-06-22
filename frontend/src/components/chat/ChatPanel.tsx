@@ -7,6 +7,7 @@ import ResourceCard from '../recommendation/ResourceCard'
 import ErrorBanner from '../common/ErrorBanner'
 import PhaseIndicator from '../common/PhaseIndicator'
 import LoadingDots from '../common/LoadingDots'
+import KnowledgeGraph from '../knowledge/KnowledgeGraph'
 import { useAutoScroll } from '../../hooks/useAutoScroll'
 
 interface Props {
@@ -23,9 +24,11 @@ export default function ChatPanel({ sessionId }: Props) {
     errorMessage,
     currentPhase,
     progress,
+    knowledgeMap,
     sendMessage,
     submitAnswer,
     clearError,
+    abort,
   } = useChatStore()
 
   const bottomRef = useAutoScroll(messages)
@@ -67,13 +70,21 @@ export default function ChatPanel({ sessionId }: Props) {
             </div>
           )}
 
+          {Object.keys(knowledgeMap).length > 0 && (
+            <div className="mt-4 border border-gray-200 rounded-xl bg-gray-50">
+              <KnowledgeGraph knowledgeMap={knowledgeMap} />
+            </div>
+          )}
+
           <div ref={bottomRef} />
         </div>
       </div>
 
       <ChatInput
         onSend={(text) => sendMessage(sessionId, text)}
+        onStop={abort}
         disabled={streaming}
+        streaming={streaming}
       />
     </div>
   )

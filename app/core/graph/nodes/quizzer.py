@@ -9,7 +9,10 @@ from app.core.agents.quizzer import quizzer_agent
 
 async def quizzer_node(state: AgentState, config: RunnableConfig) -> dict:
     """Generate quiz questions and set quiz_pending."""
-    questions = await quizzer_agent.run(dict(state))
+    model_override = config.get("configurable", {}).get("model")
+    state_dict = dict(state)
+    state_dict["thread_id"] = config.get("configurable", {}).get("thread_id", "")
+    questions = await quizzer_agent.run(state_dict, model_override)
 
     if not questions:
         return {

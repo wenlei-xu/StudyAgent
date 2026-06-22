@@ -16,11 +16,11 @@ export default function SessionList({
   onCreate,
 }: Props) {
   return (
-    <div className="w-64 bg-gray-50 border-r border-gray-200 flex flex-col h-full">
-      <div className="p-4 border-b border-gray-200">
+    <div className="flex flex-col flex-1 min-h-0">
+      <div className="p-3 border-b border-gray-200">
         <button
           onClick={onCreate}
-          className="w-full py-2 px-4 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          className="w-full py-1.5 px-3 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
         >
           + 新建学习会话
         </button>

@@ -6,7 +6,7 @@ from app.config import settings
 
 _client = AsyncOpenAI(
     api_key=settings.openai_api_key,
-    base_url=settings.openai_base_url,
+    base_url=settings.embedding_base_url or "https://api.openai.com/v1",
 )
 
 

@@ -6,11 +6,16 @@ from app.config import settings
 _pool: asyncpg.Pool | None = None
 
 
+def _to_asyncpg_dsn(url: str) -> str:
+    """Convert SQLAlchemy DSN (postgresql+asyncpg://...) to asyncpg DSN (postgresql://...)."""
+    return url.replace("postgresql+asyncpg://", "postgresql://")
+
+
 async def get_pool() -> asyncpg.Pool:
     global _pool
     if _pool is None:
         _pool = await asyncpg.create_pool(
-            dsn=settings.database_url,
+            dsn=_to_asyncpg_dsn(settings.database_url),
             min_size=2,
             max_size=10,
             command_timeout=30,

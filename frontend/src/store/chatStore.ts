@@ -17,6 +17,7 @@ interface ChatStore {
   knowledgeMap: Record<string, 'mastered' | 'learning' | 'unfamiliar'>
   progress: number
 
+  selectedModel: string | null
   activeRequest: AbortController | null
 
   sendMessage: (sessionId: string, text: string) => void
@@ -24,6 +25,7 @@ interface ChatStore {
   appendToken: (token: string) => void
   setQuizCard: (card: QuizCard) => void
   setCheckResult: (result: CheckResult) => void
+  setSelectedModel: (model: string | null) => void
   clearError: () => void
   abort: () => void
 }
@@ -42,6 +44,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   progress: 0,
 
   activeRequest: null,
+  selectedModel: 'deepseek-v4-flash',
 
   sendMessage: (sessionId: string, text: string) => {
     const state = get()
@@ -72,6 +75,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     const ctrl = connectSSE(
       sessionId,
       text,
+      state.selectedModel,
       (event) => {
         const s = get()
         switch (event.type) {
@@ -148,13 +152,22 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   setCheckResult: (result: CheckResult) =>
     set({ checkResult: result, currentPhase: 'checking' }),
 
+  setSelectedModel: (model: string | null) => set({ selectedModel: model }),
+
   clearError: () => set({ errorMessage: null }),
 
   abort: () => {
     const { activeRequest } = get()
     if (activeRequest) {
       activeRequest.abort()
-      set({ activeRequest: null, streaming: false })
+      set((s) => {
+        const msgs = [...s.messages]
+        const last = msgs[msgs.length - 1]
+        if (last && last.role === 'ai' && last.streaming) {
+          msgs[msgs.length - 1] = { ...last, streaming: false }
+        }
+        return { messages: msgs, activeRequest: null, streaming: false, currentPhase: 'idle' as const }
+      })
     }
   },
 }))

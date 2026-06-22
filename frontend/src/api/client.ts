@@ -10,18 +10,22 @@ class FatalError extends Error {}
 export function connectSSE(
   sessionId: string,
   message: string,
+  model: string | null,
   onEvent: (event: SSEEvent) => void,
   onClose: () => void,
   onError: (err: Error) => void,
 ): AbortController {
   const controller = new AbortController()
 
+  const body: Record<string, string> = { message }
+  if (model) body.model = model
+
   fetchEventSource(`/chat/${sessionId}/stream`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify(body),
     signal: controller.signal,
     openWhenHidden: true,
 

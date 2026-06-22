@@ -38,10 +38,10 @@ class RecommenderAgent(BaseAgent):
 
         return system, "请推荐学习资源"
 
-    async def run(self, state: dict) -> list[dict]:
+    async def run(self, state: dict, model_override: str | None = None) -> list[dict]:
         system, user = self.build_prompt(state)
         try:
-            result = await self.generate_structured(system, user, RecommendationResultModel)
+            result = await self.generate_structured(system, user, RecommendationResultModel, model_override)
             return [c.model_dump() for c in result.cards]
         except Exception:
             return [{

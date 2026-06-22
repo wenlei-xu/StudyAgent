@@ -15,7 +15,7 @@ def _route_from_supervisor(state: AgentState) -> str:
     return state.get("next", "explainer")
 
 
-def build_graph() -> StateGraph:
+def build_graph(checkpointer=None):
     graph = StateGraph(AgentState)
 
     # Add all nodes
@@ -47,7 +47,7 @@ def build_graph() -> StateGraph:
     graph.add_edge("check_answer", "supervisor")
     graph.add_edge("recommender", "supervisor")
 
-    return graph.compile()
+    return graph.compile(checkpointer=checkpointer)
 
 
 _graph = None

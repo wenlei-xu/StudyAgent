@@ -33,3 +33,12 @@ class ErrorRepository(BaseRepository):
             session_id, limit,
         )
         return [json.loads(r["quiz_data"]) for r in rows]
+
+    async def sample_old_errors_any(self, limit: int = 3) -> list[dict]:
+        """Sample errors from any session for spaced repetition."""
+        rows = await self.fetch(
+            """SELECT quiz_data FROM error_notebook
+               ORDER BY RANDOM() LIMIT $1""",
+            limit,
+        )
+        return [json.loads(r["quiz_data"]) for r in rows]

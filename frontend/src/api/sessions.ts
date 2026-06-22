@@ -1,6 +1,6 @@
 import type { SessionResponse, SessionCreate } from './types'
 
-const BASE = '/sessions'
+const BASE = '/sessions/'
 
 export async function listSessions(): Promise<SessionResponse[]> {
   const res = await fetch(BASE)

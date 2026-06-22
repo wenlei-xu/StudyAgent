@@ -38,10 +38,10 @@ class CheckerAgent(BaseAgent):
 
         return system, "请批改"
 
-    async def run(self, state: dict) -> dict:
+    async def run(self, state: dict, model_override: str | None = None) -> dict:
         system, user = self.build_prompt(state)
         try:
-            result = await self.generate_structured(system, user, CheckResultModel)
+            result = await self.generate_structured(system, user, CheckResultModel, model_override)
             return result.model_dump()
         except Exception:
             quiz = state.get("quiz_pending") or {}

@@ -1,8 +1,8 @@
 """FastAPI dependencies — inject DB sessions, graph instance, etc."""
 
-from app.core.graph.builder import get_graph
+from fastapi import Request
 
 
-async def get_graph_dependency():
-    """Inject the compiled LangGraph graph singleton."""
-    return get_graph()
+async def get_graph_dependency(request: Request):
+    """Inject the compiled LangGraph graph singleton (with PostgresSaver)."""
+    return request.app.state.graph

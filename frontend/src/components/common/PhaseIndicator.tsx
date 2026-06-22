@@ -1,3 +1,5 @@
+import ProgressBar from '../knowledge/ProgressBar'
+
 const PHASE_LABELS: Record<string, string> = {
   idle: '就绪',
   explaining: '正在讲解…',
@@ -21,17 +23,9 @@ export default function PhaseIndicator({ phase, progress }: Props) {
           {PHASE_LABELS[phase] ?? phase}
         </span>
         {progress > 0 && (
-          <>
-            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden max-w-[120px]">
-              <div
-                className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                style={{ width: `${Math.round(progress * 100)}%` }}
-              />
-            </div>
-            <span className="text-xs text-gray-400">
-              {Math.round(progress * 100)}%
-            </span>
-          </>
+          <div className="max-w-[160px] flex-1">
+            <ProgressBar progress={progress} size="sm" showLabel />
+          </div>
         )}
       </div>
     </div>

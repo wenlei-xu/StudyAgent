@@ -10,7 +10,7 @@ class SessionRepository(BaseRepository):
     async def create_session(self, learning_goal: str, user_id: str = "default") -> dict:
         sid = str(uuid.uuid4())
         thread_id = str(uuid.uuid4())
-        now = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
 
         await self.execute(
             """INSERT INTO sessions (id, thread_id, user_id, learning_goal, progress, status, created_at, updated_at)

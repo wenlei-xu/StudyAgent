@@ -1,54 +1,45 @@
-"""Sessions REST API — CRUD operations for learning sessions."""
+"""Sessions REST API — CRUD operations for learning sessions.
 
-import uuid
-from datetime import datetime, timezone
+Uses SessionRepository backed by PostgreSQL (via asyncpg connection pool).
+"""
 
 from fastapi import APIRouter
 
-from app.models.session import SessionCreate, SessionResponse
+from app.db.connection import get_connection, release_connection
+from app.db.repositories.session_repo import SessionRepository
+from app.models.session import SessionCreate
 
 router = APIRouter()
 
-# In-memory fallback (replaced by DB repositories in Phase 4 with real PostgreSQL)
-_sessions: dict[str, dict] = {}
 
-
-@router.get("/", response_model=dict)
+@router.get("/")
 async def list_sessions():
-    return {
-        "sessions": [
-            {
-                "id": s["id"],
-                "thread_id": s["thread_id"],
-                "learning_goal": s["learning_goal"],
-                "progress": s["progress"],
-                "status": s["status"],
-                "created_at": s["created_at"],
-            }
-            for s in _sessions.values()
-        ]
-    }
+    conn = await get_connection()
+    try:
+        repo = SessionRepository(conn)
+        sessions = await repo.list_sessions()
+        return {"sessions": sessions}
+    finally:
+        await release_connection(conn)
 
 
-@router.post("/", response_model=dict)
+@router.post("/")
 async def create_session(body: SessionCreate):
-    sid = str(uuid.uuid4())
-    thread_id = str(uuid.uuid4())
-    now = datetime.now(timezone.utc)
-
-    session = {
-        "id": sid,
-        "thread_id": thread_id,
-        "learning_goal": body.learning_goal,
-        "progress": 0.0,
-        "status": "active",
-        "created_at": now.isoformat(),
-    }
-    _sessions[sid] = session
-    return session
+    conn = await get_connection()
+    try:
+        repo = SessionRepository(conn)
+        session = await repo.create_session(body.learning_goal)
+        return session
+    finally:
+        await release_connection(conn)
 
 
 @router.delete("/{session_id}")
 async def delete_session(session_id: str):
-    _sessions.pop(session_id, None)
-    return {"id": session_id, "status": "deleted"}
+    conn = await get_connection()
+    try:
+        repo = SessionRepository(conn)
+        await repo.delete_session(session_id)
+        return {"id": session_id, "status": "deleted"}
+    finally:
+        await release_connection(conn)
