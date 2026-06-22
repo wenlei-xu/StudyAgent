@@ -6,11 +6,11 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_base_url: str = "https://api.openai.com/v1"
 
-    supervisor_model: str = "gpt-4o"
-    explainer_model: str = "gpt-4o-mini"
-    quizzer_model: str = "gpt-4o"
-    checker_model: str = "gpt-4o-mini"
-    recommender_model: str = "gpt-4o-mini"
+    supervisor_model: str = "deepseek-reasoner"
+    explainer_model: str = "deepseek-chat"
+    quizzer_model: str = "deepseek-reasoner"
+    checker_model: str = "deepseek-chat"
+    recommender_model: str = "deepseek-chat"
 
     # Embedding
     embedding_model: str = "text-embedding-3-small"
