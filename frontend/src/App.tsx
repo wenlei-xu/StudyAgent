@@ -1,7 +1,7 @@
-import { useSessionStore } from '../store/sessionStore'
-import SessionList from '../components/session/SessionList'
-import SessionCreate from '../components/session/SessionCreate'
-import ChatPanel from '../components/chat/ChatPanel'
+import { useSessionStore } from './store/sessionStore'
+import SessionList from './components/session/SessionList'
+import SessionCreate from './components/session/SessionCreate'
+import ChatPanel from './components/chat/ChatPanel'
 import { useState, useEffect } from 'react'
 
 export default function App() {
