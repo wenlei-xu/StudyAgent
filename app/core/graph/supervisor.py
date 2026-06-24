@@ -13,6 +13,14 @@ from app.config import settings
 
 VALID_TARGETS = {"explainer", "quizzer", "check_answer", "recommender", "FINISH"}
 
+# Map node names (supervisor targets) to phase names set by individual nodes
+TARGET_TO_PHASE = {
+    "explainer": "explaining",
+    "quizzer": "quiz",
+    "check_answer": "checking",
+    "recommender": "recommending",
+}
+
 
 async def supervisor_node(state: AgentState, config: RunnableConfig) -> dict:
     """Analyze state and return routing decision."""
@@ -69,12 +77,13 @@ async def supervisor_node(state: AgentState, config: RunnableConfig) -> dict:
         target = "explainer"
 
     # Guard: prevent infinite loop — don't call the same node consecutively without user input.
-    # But if the user just sent a new message (last message is human), allow the same target.
+    # Uses TARGET_TO_PHASE to bridge node names ("explainer") and phase names ("explaining").
     last_is_human = any(
         hasattr(m, "type") and m.type == "human"
         for m in messages[-1:]
     )
-    if target == current_phase and target != "check_answer" and not last_is_human:
+    equivalent_phase = TARGET_TO_PHASE.get(target, target)
+    if equivalent_phase == current_phase and target != "check_answer" and not last_is_human:
         target = "FINISH"
 
     if target == "FINISH":
