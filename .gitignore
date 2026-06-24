@@ -26,3 +26,7 @@ Thumbs.db
 
 # pytest
 .pytest_cache/
+
+文档.txt
+function.md
+technology.md
