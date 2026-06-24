@@ -22,6 +22,6 @@ export async function createSession(
 }
 
 export async function deleteSession(sessionId: string): Promise<void> {
-  const res = await fetch(`${BASE}/${sessionId}`, { method: 'DELETE' })
+  const res = await fetch(`${BASE}${sessionId}`, { method: 'DELETE' })
   if (!res.ok) throw new Error(`删除会话失败: ${res.status}`)
 }
