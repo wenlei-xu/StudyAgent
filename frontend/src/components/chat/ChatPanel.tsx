@@ -39,7 +39,12 @@ export default function ChatPanel({ sessionId }: Props) {
     fetchStagesAction,
     submitHomeworkAction,
     clearHomeworkResult,
+    loadHistory,
   } = useChatStore()
+
+  useEffect(() => {
+    loadHistory(sessionId)
+  }, [sessionId])
 
   // Load stages when session changes
   useEffect(() => {

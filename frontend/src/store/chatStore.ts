@@ -28,6 +28,8 @@ interface ChatStore {
 
   sendMessage: (sessionId: string, text: string) => void
   submitAnswer: (sessionId: string, option: string) => void
+  loadHistory: (sessionId: string) => Promise<void>
+  resetSession: () => void
   appendToken: (token: string) => void
   setQuizCard: (card: QuizCard) => void
   setCheckResult: (result: CheckResult) => void
@@ -164,6 +166,44 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   submitAnswer: (sessionId: string, option: string) => {
     get().sendMessage(sessionId, option)
   },
+
+  loadHistory: async (sessionId: string) => {
+    const state = get()
+    // Already loaded for this session → skip
+    if (!state.streaming && state.messages.length > 0 && state.messages[0]?.id?.startsWith(`hist-${sessionId.slice(0, 8)}`)) {
+      return
+    }
+    get().resetSession()
+    try {
+      const res = await fetch(`/chat/${sessionId}/history`)
+      if (!res.ok) return
+      const data = await res.json()
+      const msgs: Message[] = (data.messages ?? []).map((m: { id?: string; role: string; content: string }, i: number) => ({
+        id: m.id ?? `hist-${sessionId.slice(0, 8)}-${i}`,
+        role: m.role as 'user' | 'ai',
+        content: m.content,
+      }))
+      set({
+        messages: msgs,
+        knowledgeMap: data.knowledge_map ?? {},
+        progress: data.progress ?? 0,
+      })
+    } catch {
+      // ignore — no history is fine, start fresh
+    }
+  },
+
+  resetSession: () => set({
+    messages: [],
+    streaming: false,
+    currentPhase: 'idle',
+    quizCard: null,
+    checkResult: null,
+    resourceCards: [],
+    errorMessage: null,
+    knowledgeMap: {},
+    progress: 0,
+  }),
 
   appendToken: (token: string) => {
     set((s) => {

@@ -69,5 +69,5 @@ class SessionRepository(BaseRepository):
     async def update_progress(self, session_id: str, progress: float):
         await self.execute(
             "UPDATE sessions SET progress = $1, updated_at = $2 WHERE id = $3",
-            progress, datetime.now(timezone.utc), session_id,
+            progress, datetime.now(timezone.utc).replace(tzinfo=None), session_id,
         )

@@ -1,14 +1,10 @@
 """POST /chat/{session_id}/stream — Core SSE streaming endpoint.
-
-Uses LangGraph astream_events for real-time LLM token streaming.
-Supports true cancellation: when client disconnects, the in-flight LLM call is cancelled.
-
-Pipeline: astream_events → filter_stream_events → buffer → format_sse → SSE frames.
+GET /chat/{session_id}/history — Read persisted messages from checkpoint.
 """
 
 import asyncio
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from langchain_core.messages import HumanMessage
 from starlette.responses import StreamingResponse
 
@@ -20,6 +16,47 @@ from app.streaming.filters import filter_stream_events
 from app.streaming.formatters import format_sse
 
 router = APIRouter()
+
+_ROLE_MAP = {
+    "human": "user",
+    "ai": "ai",
+    "system": "system",
+}
+
+
+@router.get("/{session_id}/history")
+async def get_chat_history(
+    session_id: str,
+    graph=Depends(get_graph_dependency),
+):
+    """Return messages + state for a session_id from checkpoints."""
+    config = {"configurable": {"thread_id": session_id}}
+    try:
+        snapshot = await graph.aget_state(config)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to read checkpoint")
+
+    if not snapshot or not snapshot.values:
+        return {"messages": [], "knowledge_map": {}, "progress": 0}
+
+    values = snapshot.values
+    messages = values.get("messages", []) or []
+
+    result = []
+    for i, m in enumerate(messages):
+        role = _ROLE_MAP.get(getattr(m, "type", ""), "user")
+        content = getattr(m, "content", "") or ""
+        result.append({
+            "id": f"hist-{session_id[:8]}-{i}",
+            "role": role,
+            "content": content,
+        })
+
+    return {
+        "messages": result,
+        "knowledge_map": values.get("knowledge_map", {}),
+        "progress": values.get("progress", 0),
+    }
 
 
 @router.post("/{session_id}/stream")

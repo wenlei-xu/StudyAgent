@@ -15,7 +15,7 @@ class ErrorRepository(BaseRepository):
             json.dumps(error_entry, ensure_ascii=False),
             error_entry.get("user_answer", ""),
             False,
-            datetime.now(timezone.utc),
+            datetime.now(timezone.utc).replace(tzinfo=None),
         )
 
     async def get_error_notebook(self, session_id: str) -> list[dict]:
