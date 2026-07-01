@@ -1,12 +1,13 @@
 import { create } from 'zustand'
-import type { Message, QuizCard, CheckResult, ResourceCard } from '../api/types'
+import type { Message, QuizCard, CheckResult, ResourceCard, LearningStage, HomeworkResult } from '../api/types'
 import { connectSSE } from '../api/client'
+import { fetchStages, generateStages, submitHomework } from '../api/stages'
 
 let msgCounter = 0
 
 interface ChatStore {
   streaming: boolean
-  currentPhase: 'idle' | 'explaining' | 'quiz' | 'checking' | 'recommending'
+  currentPhase: 'idle' | 'planning' | 'explaining' | 'quiz' | 'checking' | 'recommending'
 
   messages: Message[]
   quizCard: QuizCard | null
@@ -20,6 +21,11 @@ interface ChatStore {
   selectedModel: string | null
   activeRequest: AbortController | null
 
+  // Stage-related state
+  stages: LearningStage[]
+  homeworkResult: HomeworkResult | null
+  stagesLoading: boolean
+
   sendMessage: (sessionId: string, text: string) => void
   submitAnswer: (sessionId: string, option: string) => void
   appendToken: (token: string) => void
@@ -28,6 +34,12 @@ interface ChatStore {
   setSelectedModel: (model: string | null) => void
   clearError: () => void
   abort: () => void
+
+  // Stage-related actions
+  fetchStagesAction: (sessionId: string) => Promise<void>
+  generateStagesAction: (sessionId: string) => Promise<void>
+  submitHomeworkAction: (sessionId: string, stageId: number, answer: string) => Promise<void>
+  clearHomeworkResult: () => void
 }
 
 export const useChatStore = create<ChatStore>((set, get) => ({
@@ -45,6 +57,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   activeRequest: null,
   selectedModel: 'deepseek-v4-flash',
+
+  // Stage state
+  stages: [],
+  homeworkResult: null,
+  stagesLoading: false,
 
   sendMessage: (sessionId: string, text: string) => {
     const state = get()
@@ -100,6 +117,21 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             break
           case 'resource_cards':
             set({ resourceCards: event.cards ?? [], currentPhase: 'recommending' })
+            break
+          case 'stages_generated':
+            if (event.stages) {
+              set({ stages: event.stages })
+            }
+            break
+          case 'stage_change':
+            if (event.current_stage) {
+              // Update the active stage in our stages list
+              const updatedStages = get().stages.map((s: LearningStage) => ({
+                ...s,
+                status: s.stage_number === event.current_stage!.stage_number ? 'active' as const : s.status,
+              }))
+              set({ stages: updatedStages })
+            }
             break
           case 'progress_update':
             set({
@@ -170,4 +202,41 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       })
     }
   },
+
+  // ── Stage actions ──
+
+  fetchStagesAction: async (sessionId: string) => {
+    set({ stagesLoading: true })
+    try {
+      const stages = await fetchStages(sessionId)
+      set({ stages, stagesLoading: false })
+    } catch {
+      set({ stagesLoading: false })
+    }
+  },
+
+  generateStagesAction: async (sessionId: string) => {
+    set({ stagesLoading: true })
+    try {
+      const stages = await generateStages(sessionId)
+      set({ stages, stagesLoading: false })
+    } catch {
+      set({ stagesLoading: false })
+    }
+  },
+
+  submitHomeworkAction: async (sessionId: string, stageId: number, answer: string) => {
+    set({ streaming: true })
+    try {
+      const result = await submitHomework(sessionId, stageId, answer)
+      set({ homeworkResult: result, streaming: false })
+      // Refresh stages after submission
+      const stages = await fetchStages(sessionId)
+      set({ stages, progress: result.next_stage_unlocked ? get().progress + (1 / stages.length) : get().progress })
+    } catch {
+      set({ streaming: false, errorMessage: '作业提交失败，请重试' })
+    }
+  },
+
+  clearHomeworkResult: () => set({ homeworkResult: null }),
 }))

@@ -14,6 +14,7 @@ EXPLAINER_SYSTEM_PROMPT = """你是一个专业、耐心的学习导师。你的
 - 已掌握知识点: {mastered_points}
 - 薄弱知识点: {weak_points}
 - 错题相关知识点: {error_points}
+- 当前学习阶段: {stage_context}
 
 ## 相关学习资料（来自知识库检索）
 {rag_context}

@@ -50,12 +50,20 @@ class ExplainerAgent(BaseAgent):
 
         rag_context = "\n\n".join(rag_texts) + web_text
 
+        # Build stage context for stage-aware teaching
+        current_stage = state.get("current_stage")
+        if current_stage:
+            stage_context = f"第{current_stage.get('stage_number', '?')}阶段「{current_stage.get('title', '')}」— {current_stage.get('description', '')}"
+        else:
+            stage_context = "自由学习模式"
+
         system = EXPLAINER_SYSTEM_PROMPT.format(
             learning_goal=state.get("learning_goal", "未设定"),
             mastered_points=", ".join(mastered) if mastered else "暂无",
             weak_points=", ".join(weak) if weak else "暂无",
             error_points=", ".join(error_points) if error_points else "暂无",
             rag_context=rag_context,
+            stage_context=stage_context,
         )
 
         return system, last_user_msg or "请开始讲解"

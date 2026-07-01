@@ -8,6 +8,7 @@ from app.core.graph.nodes.explainer import explainer_node
 from app.core.graph.nodes.quizzer import quizzer_node
 from app.core.graph.nodes.check_answer import check_answer_node
 from app.core.graph.nodes.recommender import recommender_node
+from app.core.graph.nodes.stage_planner import stage_planner_node
 
 
 def _route_from_supervisor(state: AgentState) -> str:
@@ -20,6 +21,7 @@ def build_graph(checkpointer=None):
 
     # Add all nodes
     graph.add_node("supervisor", supervisor_node)
+    graph.add_node("stage_planner", stage_planner_node)
     graph.add_node("explainer", explainer_node)
     graph.add_node("quizzer", quizzer_node)
     graph.add_node("check_answer", check_answer_node)
@@ -33,6 +35,7 @@ def build_graph(checkpointer=None):
         "supervisor",
         _route_from_supervisor,
         {
+            "stage_planner": "stage_planner",
             "explainer": "explainer",
             "quizzer": "quizzer",
             "check_answer": "check_answer",
@@ -42,6 +45,7 @@ def build_graph(checkpointer=None):
     )
 
     # All sub-nodes loop back to supervisor for next routing decision
+    graph.add_edge("stage_planner", "supervisor")
     graph.add_edge("explainer", "supervisor")
     graph.add_edge("quizzer", "supervisor")
     graph.add_edge("check_answer", "supervisor")

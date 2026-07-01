@@ -13,6 +13,8 @@ from langchain_core.messages import HumanMessage
 from starlette.responses import StreamingResponse
 
 from app.api.dependencies import get_graph_dependency
+from app.db.connection import get_connection, release_connection
+from app.db.repositories.stage_repo import StageRepository
 from app.models.chat import ChatRequest
 from app.streaming.filters import filter_stream_events
 from app.streaming.formatters import format_sse
@@ -27,8 +29,31 @@ async def chat_stream(
     request: Request,
     graph=Depends(get_graph_dependency),
 ):
+    # Load current stage info so the supervisor can be stage-aware
+    current_stage = None
+    stages = None
+    conn = await get_connection()
+    try:
+        stage_repo = StageRepository(conn)
+        current_stage = await stage_repo.get_current_stage(session_id)
+        if current_stage is None:
+            # Check if stages exist at all (might be all completed)
+            all_stages = await stage_repo.get_stages(session_id)
+            if all_stages:
+                stages = all_stages
+    except Exception:
+        pass  # Table might not exist yet — graceful degradation
+    finally:
+        await release_connection(conn)
+
     config = {"configurable": {"thread_id": session_id, "model": body.model}, "recursion_limit": 50}
-    input_state = {"messages": [HumanMessage(content=body.message)]}
+    input_state = {
+        "messages": [HumanMessage(content=body.message)],
+        "current_stage": current_stage,
+        "stages": stages,
+        "thread_id": session_id,
+        "learning_goal": "",  # Will be set by stage_planner or from DB
+    }
 
     async def event_generator():
         buffer: list[dict] = []

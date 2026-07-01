@@ -1,4 +1,5 @@
 import { useChatStore } from '../../store/chatStore'
+import { useEffect } from 'react'
 import MessageBubble from './MessageBubble'
 import ChatInput from './ChatInput'
 import QuizCard from '../quiz/QuizCard'
@@ -8,6 +9,8 @@ import ErrorBanner from '../common/ErrorBanner'
 import PhaseIndicator from '../common/PhaseIndicator'
 import LoadingDots from '../common/LoadingDots'
 import KnowledgeGraph from '../knowledge/KnowledgeGraph'
+import StagePanel from '../stages/StagePanel'
+import HomeworkPanel from '../stages/HomeworkPanel'
 import { useAutoScroll } from '../../hooks/useAutoScroll'
 
 interface Props {
@@ -29,7 +32,30 @@ export default function ChatPanel({ sessionId }: Props) {
     submitAnswer,
     clearError,
     abort,
+    // Stage state
+    stages,
+    homeworkResult,
+    stagesLoading,
+    fetchStagesAction,
+    submitHomeworkAction,
+    clearHomeworkResult,
   } = useChatStore()
+
+  // Load stages when session changes
+  useEffect(() => {
+    fetchStagesAction(sessionId)
+  }, [sessionId])
+
+  // Find the currently active stage
+  const activeStage = stages.find((s) => s.status === 'active')
+
+  // Clear homework result when active stage changes
+  useEffect(() => {
+    clearHomeworkResult()
+  }, [activeStage?.id, sessionId])
+
+  // Show stages loading when streaming and no stages yet (stage_planner is working)
+  const showStagesLoading = stagesLoading || (streaming && stages.length === 0 && currentPhase === 'planning')
 
   const bottomRef = useAutoScroll(messages)
 
@@ -39,6 +65,23 @@ export default function ChatPanel({ sessionId }: Props) {
 
       {errorMessage && (
         <ErrorBanner message={errorMessage} onDismiss={clearError} />
+      )}
+
+      {/* Stage timeline */}
+      <StagePanel
+        stages={stages}
+        loading={showStagesLoading}
+      />
+
+      {/* Active stage homework */}
+      {activeStage && (
+        <HomeworkPanel
+          stage={activeStage}
+          result={homeworkResult}
+          loading={streaming}
+          onSubmit={(answer) => submitHomeworkAction(sessionId, activeStage.id, answer)}
+          onClearResult={clearHomeworkResult}
+        />
       )}
 
       <div className="flex-1 overflow-y-auto px-4 py-6">

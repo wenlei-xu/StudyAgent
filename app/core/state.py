@@ -21,3 +21,5 @@ class AgentState(TypedDict):
     progress: float  # 0.0 ~ 1.0
     quiz_pending: Optional[dict]  # QuizCard dict, set by quizzer, cleared by checker
     next: str  # supervisor routing target, transient
+    current_stage: Optional[dict]  # {stage_number, title, description, homework, status}
+    stages: Optional[list[dict]]  # Full list of stage dicts, set by stage_planner

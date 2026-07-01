@@ -31,7 +31,7 @@ export const useSessionStore = create<SessionStore>((set) => ({
   createSession: async (learningGoal: string) => {
     const session = await createSession({ learning_goal: learningGoal })
     set((s) => ({ sessions: [...s.sessions, session], currentSessionId: session.id }))
-    return session
+    return session.id
   },
 
   removeSession: async (id: string) => {

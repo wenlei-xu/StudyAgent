@@ -11,10 +11,11 @@ from app.core.state import AgentState
 from app.core.prompts.supervisor import SUPERVISOR_SYSTEM_PROMPT
 from app.config import settings
 
-VALID_TARGETS = {"explainer", "quizzer", "check_answer", "recommender", "FINISH"}
+VALID_TARGETS = {"stage_planner", "explainer", "quizzer", "check_answer", "recommender", "FINISH"}
 
 # Map node names (supervisor targets) to phase names set by individual nodes
 TARGET_TO_PHASE = {
+    "stage_planner": "planning",
     "explainer": "explaining",
     "quizzer": "quiz",
     "check_answer": "checking",
@@ -38,13 +39,39 @@ async def supervisor_node(state: AgentState, config: RunnableConfig) -> dict:
         history_lines.append(f"[{role}]: {content[:200]}")
     conversation_history = "\n".join(history_lines)
 
+    # Build current stage info string
+    current_stage = state.get("current_stage")
+    if current_stage:
+        stage_info = f"第{current_stage.get('stage_number', '?')}阶段: {current_stage.get('title', '')} — {current_stage.get('description', '')}"
+    else:
+        stage_info = "尚未设定学习阶段"
+
     system = SUPERVISOR_SYSTEM_PROMPT.format(
         learning_goal=learning_goal,
         current_phase=current_phase,
         knowledge_map=str(knowledge_map) if knowledge_map else "暂无数据",
         progress=f"{progress:.0%}",
         conversation_history=conversation_history,
+        current_stage_info=stage_info,
     )
+
+    # Check if we need to generate stages first
+    current_stage = state.get("current_stage")
+    stages = state.get("stages")
+    if not current_stage and not stages:
+        # No stages exist yet — check if user message is substantive enough
+        last_user_msg = ""
+        for m in reversed(messages):
+            if hasattr(m, "type") and m.type == "human":
+                last_user_msg = m.content
+                break
+        # Route to stage_planner if message is more than a short greeting
+        if len(last_user_msg.strip()) >= 4:
+            return {"current_phase": "planning", "next": "stage_planner"}
+
+    # After stage_planner completes, route to explainer to start teaching
+    if current_phase == "planning":
+        return {"current_phase": "explaining", "next": "explainer"}
 
     # Get the last user message
     last_user_msg = ""

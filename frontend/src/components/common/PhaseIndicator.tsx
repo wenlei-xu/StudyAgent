@@ -2,6 +2,7 @@ import ProgressBar from '../knowledge/ProgressBar'
 
 const PHASE_LABELS: Record<string, string> = {
   idle: '就绪',
+  planning: '正在规划学习阶段…',
   explaining: '正在讲解…',
   quiz: '答题中',
   checking: '批改中',

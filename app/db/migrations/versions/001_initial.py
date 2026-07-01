@@ -1,5 +1,8 @@
 """Initial migration — creates all core tables and enables pgvector."""
 
+from alembic import op
+import sqlalchemy as sa
+
 revision = "001"
 down_revision = None
 branch_labels = None

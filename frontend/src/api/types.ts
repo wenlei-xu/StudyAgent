@@ -55,6 +55,8 @@ export type SSEEventType =
   | 'check_result'
   | 'resource_cards'
   | 'progress_update'
+  | 'stages_generated'
+  | 'stage_change'
   | 'error'
 
 export interface SSEEvent {
@@ -72,6 +74,8 @@ export interface SSEEvent {
   correct?: boolean
   explanation?: string
   correct_answer?: string
+  stages?: LearningStage[]
+  current_stage?: LearningStage
 }
 
 // ── Messages ──
@@ -81,4 +85,23 @@ export interface Message {
   role: 'user' | 'ai' | 'system'
   content: string
   streaming?: boolean
+}
+
+// ── Learning Stages ──
+
+export interface LearningStage {
+  id: number
+  stage_number: number
+  title: string
+  description: string
+  homework: string
+  status: 'locked' | 'active' | 'completed'
+  created_at?: string
+}
+
+export interface HomeworkResult {
+  passed: boolean
+  feedback: string
+  stage_number: number
+  next_stage_unlocked: boolean
 }

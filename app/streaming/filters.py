@@ -13,8 +13,8 @@ async def filter_stream_events(events: AsyncIterator[dict]) -> AsyncIterator[dic
         kind = event.get("event", "")
 
         if kind == "on_chat_model_stream":
-            # Skip supervisor routing tokens — only stream sub-agent output
-            if event.get("metadata", {}).get("langgraph_node") == "supervisor":
+            # Skip supervisor and stage_planner tokens — these are internal LLM calls
+            if event.get("metadata", {}).get("langgraph_node") in ("supervisor", "stage_planner"):
                 continue
             chunk = event.get("data", {}).get("chunk")
             if chunk and hasattr(chunk, "content") and chunk.content:
@@ -22,12 +22,26 @@ async def filter_stream_events(events: AsyncIterator[dict]) -> AsyncIterator[dic
             continue
 
         if kind == "on_chain_end" and event.get("name") in (
-            "quizzer", "check_answer", "recommender"
+            "stage_planner", "quizzer", "check_answer", "recommender"
         ):
             output = event.get("data", {}).get("output", {})
             node_name = event["name"]
 
-            if node_name == "quizzer":
+            if node_name == "stage_planner":
+                stages = output.get("stages")
+                current_stage = output.get("current_stage")
+                # Emit summary message text so it appears in the chat
+                messages = output.get("messages", [])
+                for m in messages:
+                    if hasattr(m, "content") and m.content:
+                        yield {"type": "token", "content": m.content}
+                if stages:
+                    yield {"type": "stages_generated", "stages": stages}
+                if current_stage:
+                    yield {"type": "stage_change", "current_stage": current_stage}
+                yield {"type": "phase_change", "phase": "explaining", "from": "stage_planner"}
+
+            elif node_name == "quizzer":
                 quiz = output.get("quiz_pending")
                 if quiz:
                     yield {"type": "quiz_card", "data": quiz}
