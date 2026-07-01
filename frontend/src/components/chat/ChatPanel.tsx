@@ -9,12 +9,33 @@ import PhaseIndicator from '../common/PhaseIndicator'
 import LoadingDots from '../common/LoadingDots'
 import KnowledgeGraph from '../knowledge/KnowledgeGraph'
 import { useAutoScroll } from '../../hooks/useAutoScroll'
+import { useEffect } from 'react'
 
 interface Props {
   sessionId: string
 }
 
 export default function ChatPanel({ sessionId }: Props) {
+  const {
+    messages,
+    streaming,
+    quizCard,
+    checkResult,
+    resourceCards,
+    errorMessage,
+    currentPhase,
+    progress,
+    knowledgeMap,
+    sendMessage,
+    submitAnswer,
+    clearError,
+    abort,
+    loadHistory,
+  } = useChatStore()
+
+  useEffect(() => {
+    loadHistory(sessionId)
+  }, [sessionId])
   const {
     messages,
     streaming,
