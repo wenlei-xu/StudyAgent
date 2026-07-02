@@ -1,7 +1,8 @@
 import { create } from 'zustand'
-import type { Message, QuizCard, CheckResult, ResourceCard, LearningStage, HomeworkResult } from '../api/types'
+import type { Message, QuizCard, CheckResult, ResourceCard, LearningStage, HomeworkResult, KnowledgeNote } from '../api/types'
 import { connectSSE } from '../api/client'
 import { fetchStages, generateStages, submitHomework } from '../api/stages'
+import { autoSummarizeNotes } from '../api/knowledge'
 
 let msgCounter = 0
 

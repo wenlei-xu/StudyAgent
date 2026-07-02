@@ -19,6 +19,7 @@ from app.api.routes.chat import router as chat_router
 from app.api.routes.health import router as health_router
 from app.api.routes.sessions import router as sessions_router
 from app.api.routes.stages import router as stages_router
+from app.api.routes.knowledge import router as knowledge_router, notes_router as knowledge_notes_router
 from app.config import settings
 from app.utils.logging_config import setup_logging
 from app.core.graph.builder import build_graph
@@ -44,3 +45,5 @@ app.include_router(health_router, tags=["health"])
 app.include_router(chat_router, prefix="/chat", tags=["chat"])
 app.include_router(sessions_router, prefix="/sessions", tags=["sessions"])
 app.include_router(stages_router, prefix="/sessions", tags=["stages"])
+app.include_router(knowledge_router, prefix="/sessions", tags=["knowledge"])
+app.include_router(knowledge_notes_router, tags=["knowledge"])

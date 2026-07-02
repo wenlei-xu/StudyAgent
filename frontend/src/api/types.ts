@@ -105,3 +105,22 @@ export interface HomeworkResult {
   stage_number: number
   next_stage_unlocked: boolean
 }
+
+// ── Knowledge Notes ──
+
+export interface KnowledgeNote {
+  id: string
+  session_id: string
+  session_name?: string
+  topic: string
+  content: string
+  tags: string[]
+  source_type: 'auto' | 'manual'
+  created_at: string
+  updated_at?: string
+}
+
+export interface GraphData {
+  nodes: { id: string; name: string; symbolSize: number; category: string; mastery_status?: string | null }[]
+  edges: { source: string; target: string; label: string }[]
+}

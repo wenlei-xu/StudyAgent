@@ -84,12 +84,24 @@ async def chat_stream(
         await release_connection(conn)
 
     config = {"configurable": {"thread_id": session_id, "model": body.model}, "recursion_limit": 50}
+
+    # Load existing learning_goal from checkpoint so stage_planner's output is preserved
+    existing_learning_goal = ""
+    try:
+        snapshot = await graph.aget_state(config)
+        if snapshot and snapshot.values:
+            existing_goal = snapshot.values.get("learning_goal", "") or ""
+            if existing_goal.strip():
+                existing_learning_goal = existing_goal
+    except Exception:
+        pass
+
     input_state = {
         "messages": [HumanMessage(content=body.message)],
         "current_stage": current_stage,
         "stages": stages,
         "thread_id": session_id,
-        "learning_goal": "",  # Will be set by stage_planner or from DB
+        "learning_goal": existing_learning_goal,
     }
 
     async def event_generator():

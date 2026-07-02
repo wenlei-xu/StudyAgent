@@ -9,6 +9,7 @@ from app.core.graph.nodes.quizzer import quizzer_node
 from app.core.graph.nodes.check_answer import check_answer_node
 from app.core.graph.nodes.recommender import recommender_node
 from app.core.graph.nodes.stage_planner import stage_planner_node
+from app.core.graph.nodes.note_taker import note_taker_node
 
 
 def _route_from_supervisor(state: AgentState) -> str:
@@ -26,6 +27,7 @@ def build_graph(checkpointer=None):
     graph.add_node("quizzer", quizzer_node)
     graph.add_node("check_answer", check_answer_node)
     graph.add_node("recommender", recommender_node)
+    graph.add_node("note_taker", note_taker_node)
 
     # Entry → supervisor
     graph.set_entry_point("supervisor")
@@ -40,16 +42,19 @@ def build_graph(checkpointer=None):
             "quizzer": "quizzer",
             "check_answer": "check_answer",
             "recommender": "recommender",
+            "note_taker": "note_taker",
             "__end__": END,
         },
     )
 
-    # All sub-nodes loop back to supervisor for next routing decision
-    graph.add_edge("stage_planner", "supervisor")
-    graph.add_edge("explainer", "supervisor")
-    graph.add_edge("quizzer", "supervisor")
-    graph.add_edge("check_answer", "supervisor")
-    graph.add_edge("recommender", "supervisor")
+    # Teaching/content nodes → note_taker → END: silently save knowledge notes
+    graph.add_edge("explainer", "note_taker")
+    graph.add_edge("quizzer", "note_taker")
+    graph.add_edge("recommender", "note_taker")
+    graph.add_edge("check_answer", "note_taker")
+    graph.add_edge("note_taker", END)
+    # stage_planner → END: wait for user's next message to continue
+    graph.add_edge("stage_planner", END)
 
     return graph.compile(checkpointer=checkpointer)
 

@@ -11,8 +11,9 @@
   },
   "dependencies": {
     "@microsoft/fetch-event-source": "^2.0.1",
+    "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.1",
-    "echarts": "^6.1.0",
+    "echarts": "^5.6.0",
     "echarts-for-react": "^3.0.6",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

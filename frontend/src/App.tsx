@@ -2,6 +2,7 @@ import { useSessionStore } from './store/sessionStore'
 import SessionList from './components/session/SessionList'
 import SessionCreate from './components/session/SessionCreate'
 import ChatPanel from './components/chat/ChatPanel'
+import KnowledgePanel from './components/knowledge/KnowledgePanel'
 import ModelSelector from './components/common/ModelSelector'
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -68,6 +69,8 @@ export default function App() {
           </div>
         )}
       </div>
+
+      {currentSessionId && <KnowledgePanel sessionId={currentSessionId} />}
 
       <SessionCreate
         open={showCreate}

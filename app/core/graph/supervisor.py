@@ -11,16 +11,7 @@ from app.core.state import AgentState
 from app.core.prompts.supervisor import SUPERVISOR_SYSTEM_PROMPT
 from app.config import settings
 
-VALID_TARGETS = {"stage_planner", "explainer", "quizzer", "check_answer", "recommender", "FINISH"}
-
-# Map node names (supervisor targets) to phase names set by individual nodes
-TARGET_TO_PHASE = {
-    "stage_planner": "planning",
-    "explainer": "explaining",
-    "quizzer": "quiz",
-    "check_answer": "checking",
-    "recommender": "recommending",
-}
+VALID_TARGETS = {"stage_planner", "explainer", "quizzer", "check_answer", "recommender", "note_taker", "FINISH"}
 
 
 async def supervisor_node(state: AgentState, config: RunnableConfig) -> dict:
@@ -69,10 +60,6 @@ async def supervisor_node(state: AgentState, config: RunnableConfig) -> dict:
         if len(last_user_msg.strip()) >= 4:
             return {"current_phase": "planning", "next": "stage_planner"}
 
-    # After stage_planner completes, route to explainer to start teaching
-    if current_phase == "planning":
-        return {"current_phase": "explaining", "next": "explainer"}
-
     # Get the last user message
     last_user_msg = ""
     for m in reversed(messages):
@@ -102,16 +89,6 @@ async def supervisor_node(state: AgentState, config: RunnableConfig) -> dict:
     # Validate and normalize target
     if target not in VALID_TARGETS:
         target = "explainer"
-
-    # Guard: prevent infinite loop — don't call the same node consecutively without user input.
-    # Uses TARGET_TO_PHASE to bridge node names ("explainer") and phase names ("explaining").
-    last_is_human = any(
-        hasattr(m, "type") and m.type == "human"
-        for m in messages[-1:]
-    )
-    equivalent_phase = TARGET_TO_PHASE.get(target, target)
-    if equivalent_phase == current_phase and target != "check_answer" and not last_is_human:
-        target = "FINISH"
 
     if target == "FINISH":
         target = "__end__"

@@ -13,8 +13,8 @@ async def filter_stream_events(events: AsyncIterator[dict]) -> AsyncIterator[dic
         kind = event.get("event", "")
 
         if kind == "on_chat_model_stream":
-            # Skip supervisor and stage_planner tokens — these are internal LLM calls
-            if event.get("metadata", {}).get("langgraph_node") in ("supervisor", "stage_planner"):
+            # Skip internal nodes — their tokens are not user-facing
+            if event.get("metadata", {}).get("langgraph_node") in ("supervisor", "stage_planner", "note_taker"):
                 continue
             chunk = event.get("data", {}).get("chunk")
             if chunk and hasattr(chunk, "content") and chunk.content:
